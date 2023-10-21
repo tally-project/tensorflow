@@ -274,7 +274,7 @@ build:tpu --define=framework_shared_object=true
 build:tpu --copt=-DLIBTPU_ON_GCE
 build:tpu --define=enable_mlir_bridge=true
 
-build:tensorrt --repo_env TF_NEED_TENSORRT=1
+build:tensorrt --repo_env TF_NEED_TENSORRT=0
 
 build:rocm --crosstool_top=@local_config_rocm//crosstool:toolchain
 build:rocm --define=using_rocm_hipcc=true

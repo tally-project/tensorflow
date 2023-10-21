@@ -181,13 +181,7 @@ tsl::Status GpuExecutor::GetKernel(const MultiKernelLoaderSpec& spec,
 
   VLOG(3) << "GetKernel on kernel " << kernel << " : " << kernel->name();
 
-  if (spec.has_cuda_cubin_in_memory()) {
-    absl::MutexLock lock{&in_memory_modules_mu_};
-    kernel_name = &spec.cuda_cubin_in_memory().kernel_name();
-    const char* cubin = spec.cuda_cubin_in_memory().bytes();
-    TF_RETURN_IF_ERROR(LoadModuleFromCuBin(cubin, &module));
-    kernel_to_gpu_binary_[kernel] = cubin;
-  } else if (spec.has_cuda_ptx_in_memory()) {
+  if (spec.has_cuda_ptx_in_memory()) {
     kernel_name = &spec.cuda_ptx_in_memory().kernel_name();
 
     if (cc_major_ == 0 && cc_minor_ == 0) {
@@ -205,6 +199,15 @@ tsl::Status GpuExecutor::GetKernel(const MultiKernelLoaderSpec& spec,
     absl::MutexLock lock{&in_memory_modules_mu_};
     TF_RETURN_IF_ERROR(LoadModuleFromPtx(ptx, &module));
     kernel_to_gpu_binary_[kernel] = ptx;
+  } else if (spec.has_cuda_cubin_in_memory()) {
+
+    LOG(WARNING) << "Using cubin because there is no ptx available in memory";
+
+    absl::MutexLock lock{&in_memory_modules_mu_};
+    kernel_name = &spec.cuda_cubin_in_memory().kernel_name();
+    const char* cubin = spec.cuda_cubin_in_memory().bytes();
+    TF_RETURN_IF_ERROR(LoadModuleFromCuBin(cubin, &module));
+    kernel_to_gpu_binary_[kernel] = cubin;
   } else {
     return tsl::errors::Internal("No method of loading CUDA kernel provided");
   }
