@@ -87,7 +87,6 @@ class GpuKernelToBlobPass
       return tensorflow::errors::Internal(
           "Expected at least one GPU architecture.");
     }
-
     // Lower to LLVM module.
     llvm::LLVMContext llvmContext;
     auto llvmModule = translateModuleToLLVMIR(gpu_module, llvmContext);
@@ -194,6 +193,9 @@ class GpuKernelToBlobPass
 #endif
         }
       }
+
+      is_compute_profile = true;
+
       if (is_compute_profile) {
         std::vector<uint8_t> ptx_bytes;
         ptx_bytes.reserve(ptx.size() + 1);
