@@ -264,15 +264,7 @@ tsl::Status GpuExecutor::LoadModule(const MultiModuleLoaderSpec& spec,
   // In GpuExecutor we store the pointer to the GPU binary (PTX or CUBIN) as
   // ModuleHandle::id().
   CUmodule cu_module;
-  if (spec.has_cuda_cubin_in_memory()) {
-    absl::MutexLock lock{&in_memory_modules_mu_};
-    TF_RETURN_IF_ERROR(LoadModuleFromCuBin(
-        reinterpret_cast<const char*>(spec.cuda_cubin_in_memory().data()),
-        &cu_module));
-    *module_handle = ModuleHandle(const_cast<void*>(
-        static_cast<const void*>(spec.cuda_cubin_in_memory().data())));
-    return ::tsl::OkStatus();
-  } else if (spec.has_cuda_ptx_in_memory()) {
+  if (spec.has_cuda_ptx_in_memory()) {
     if (cc_major_ == 0 && cc_minor_ == 0) {
       return tsl::errors::Internal("Compute capability not set");
     }
@@ -286,6 +278,14 @@ tsl::Status GpuExecutor::LoadModule(const MultiModuleLoaderSpec& spec,
         LoadModuleFromPtx(spec.cuda_ptx_in_memory(), &cu_module));
     *module_handle = ModuleHandle(
         const_cast<void*>(static_cast<const void*>(spec.cuda_ptx_in_memory())));
+    return ::tsl::OkStatus();
+  } else if (spec.has_cuda_cubin_in_memory()) {
+    absl::MutexLock lock{&in_memory_modules_mu_};
+    TF_RETURN_IF_ERROR(LoadModuleFromCuBin(
+        reinterpret_cast<const char*>(spec.cuda_cubin_in_memory().data()),
+        &cu_module));
+    *module_handle = ModuleHandle(const_cast<void*>(
+        static_cast<const void*>(spec.cuda_cubin_in_memory().data())));
     return ::tsl::OkStatus();
   }
   return tsl::errors::Internal("No method of loading CUDA module provided");
